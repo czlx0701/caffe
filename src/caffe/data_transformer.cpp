@@ -45,10 +45,11 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
             int data_index = (c * height + h + h_off) * width + w + w_off;
             int top_index = ((batch_item_id * channels + c) * crop_size + h)
                 * crop_size + (crop_size - 1 - w);
+            int mean_index = (c * crop_size + h) * crop_size + w;
             Dtype datum_element =
                 static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
             transformed_data[top_index] =
-                (datum_element - mean[data_index]) * scale;
+                (datum_element - mean[mean_index]) * scale;
           }
         }
       }
@@ -60,10 +61,11 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
             int top_index = ((batch_item_id * channels + c) * crop_size + h)
                 * crop_size + w;
             int data_index = (c * height + h + h_off) * width + w + w_off;
+            int mean_index = (c * crop_size + h) * crop_size + w;
             Dtype datum_element =
                 static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
             transformed_data[top_index] =
-                (datum_element - mean[data_index]) * scale;
+                (datum_element - mean[mean_index]) * scale;
           }
         }
       }

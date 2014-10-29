@@ -37,10 +37,17 @@ void BaseDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     BlobProto blob_proto;
     ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
     data_mean_.FromProto(blob_proto);
-    CHECK_GE(data_mean_.num(), 1);
-    CHECK_GE(data_mean_.channels(), datum_channels_);
-    CHECK_GE(data_mean_.height(), datum_height_);
-    CHECK_GE(data_mean_.width(), datum_width_);
+    if (transform_param_.has_crop_size()) {
+        CHECK_EQ(data_mean_.num(), 1);
+        CHECK_EQ(data_mean_.channels(), datum_channels_);
+        CHECK_EQ(data_mean_.height(), transform_param_.crop_size());
+        CHECK_EQ(data_mean_.width(), transform_param_.crop_size());
+    } else {
+        CHECK_EQ(data_mean_.num(), 1);
+        CHECK_EQ(data_mean_.channels(), datum_channels_);
+        CHECK_EQ(data_mean_.height(), datum_height_);
+        CHECK_EQ(data_mean_.width(), datum_width_);
+    }
   } else {
     // Simply initialize an all-empty mean.
     data_mean_.Reshape(1, datum_channels_, datum_height_, datum_width_);
