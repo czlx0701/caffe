@@ -487,6 +487,73 @@ class SliceLayer : public Layer<Dtype> {
   vector<int> slice_point_;
 };
 
+template <typename Dtype>
+class ReorderLayer: public Layer<Dtype> {
+ protected:
+  explicit ReorderLayer(const LayerParameter& param)
+      : Layer<Dtype>(param), count_(0) {}
+
+ public:
+  static ReorderLayer<Dtype>* Create(const LayerParameter& param);
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_REORDER;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 1; }
+  virtual inline int ExactNumTopBlobs() const { return 1; }
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
+ protected:
+  int count_;
+};
+
+template <typename Dtype>
+class ReorderLayerCHW: public ReorderLayer<Dtype> {
+ public:
+  explicit ReorderLayerCHW(const LayerParameter& param)
+      : ReorderLayer<Dtype>(param), num_(0),
+        channels_(0), height_(0), width_(0) {}
+
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top) {}
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top) {}
+
+ protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top) {}
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  int num_;
+  int channels_;
+  int height_;
+  int width_;
+};
+
+template <typename Dtype>
+class ReorderLayerCOnly: public ReorderLayer<Dtype> {
+ public:
+  explicit ReorderLayerCOnly(const LayerParameter& param)
+      : ReorderLayer<Dtype>(param) {}
+
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+ protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+  typedef pair<int, int> Coord;
+  vector<Coord> position_;
+};
+
+
 }  // namespace caffe
 
 #endif  // CAFFE_COMMON_LAYERS_HPP_

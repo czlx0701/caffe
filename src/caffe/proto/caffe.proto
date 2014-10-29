@@ -268,6 +268,7 @@ message LayerParameter {
     TANH = 23;
     WINDOW_DATA = 24;
     THRESHOLD = 31;
+    REORDER = 38;
   }
   optional LayerType type = 5; // the layer type from the enum above
 
@@ -323,6 +324,7 @@ message LayerParameter {
   optional TanHParameter tanh_param = 37;
   optional ThresholdParameter threshold_param = 25;
   optional WindowDataParameter window_data_param = 20;
+  optional ReorderParameter reorder_param = 41;
 
   // Parameters for data pre-processing.
   optional TransformationParameter transform_param = 36;
@@ -642,6 +644,23 @@ message SliceParameter {
   // By default, SliceLayer slices across channels.
   optional uint32 slice_dim = 1 [default = 1];
   repeated uint32 slice_point = 2;
+}
+
+// Messages that stores parameters used by ReorderLayer
+message ReorderParameter {
+    enum StorageOrder {
+        ChannelHeightWeight = 0;
+        ChannelOnly = 1;
+    }
+    optional StorageOrder order = 1 [default = ChannelOnly];
+    // For ChannelOnly
+    repeated uint32 row = 2;
+    repeated uint32 col = 3;
+
+    // For ChannelHeightWeight
+    optional uint32 channels = 4 [default = 1];
+    optional uint32 height   = 5 [default = 1];
+    optional uint32 width    = 6 [default = 1];
 }
 
 // Message that stores parameters used by SoftmaxLayer, SoftMaxWithLossLayer
