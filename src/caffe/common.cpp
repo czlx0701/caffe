@@ -53,6 +53,11 @@ void Caffe::SetDevice(const int device_id) {
   NO_GPU;
 }
 
+int Caffe::GetDevice() {
+  NO_GPU;
+  return -1;
+}
+
 void Caffe::DeviceQuery() {
   NO_GPU;
 }
@@ -143,7 +148,7 @@ void Caffe::SetDevice(const int device_id) {
   CURAND_CHECK(curandSetPseudoRandomGeneratorSeed(Get().curand_generator_,
       cluster_seedgen()));
 }
-                                                                                                                                                                                                                                               
+
 int Caffe::GetDevice() {
     int current_device;
     CUDA_CHECK(cudaGetDevice(&current_device));
