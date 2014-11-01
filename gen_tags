@@ -1,0 +1,2 @@
+#!/bin/sh
+ctags --fields=+l -R . build/src/ include /usr/include/glog /usr/include/opencv /usr/include/opencv2
