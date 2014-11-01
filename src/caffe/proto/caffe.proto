@@ -656,11 +656,12 @@ message ReorderParameter {
     // For ChannelOnly
     repeated uint32 row = 2;
     repeated uint32 col = 3;
+    repeated uint32 position = 4;
 
     // For ChannelHeightWeight
-    optional uint32 channels = 4 [default = 1];
-    optional uint32 height   = 5 [default = 1];
-    optional uint32 width    = 6 [default = 1];
+    optional uint32 channels = 5 [default = 1];
+    optional uint32 height   = 6 [default = 1];
+    optional uint32 width    = 7 [default = 1];
 }
 
 // Message that stores parameters used by SoftmaxLayer, SoftMaxWithLossLayer

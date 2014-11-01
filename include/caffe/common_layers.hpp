@@ -516,13 +516,13 @@ class ReorderLayerCHW: public ReorderLayer<Dtype> {
         channels_(0), height_(0), width_(0) {}
 
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-      vector<Blob<Dtype>*>* top) {}
+      vector<Blob<Dtype>*>* top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
-      vector<Blob<Dtype>*>* top) {}
+      vector<Blob<Dtype>*>* top);
 
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      vector<Blob<Dtype>*>* top) {}
+      vector<Blob<Dtype>*>* top);
   virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
@@ -549,8 +549,7 @@ class ReorderLayerCOnly: public ReorderLayer<Dtype> {
   virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
 
-  typedef pair<int, int> Coord;
-  vector<Coord> position_;
+  vector<int> position_;
 };
 
 
