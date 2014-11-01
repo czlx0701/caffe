@@ -160,12 +160,6 @@ void ReorderLayerCHW<Dtype>::Forward_cpu(
   }
 }
 
-#ifdef CPU_ONLY
-STUB_GPU_BACKWARD(ReorderLayer, Backward);
-STUB_GPU_FORWARD(ReorderLayerCHW, Forward);
-STUB_GPU_FORWARD(ReorderLayerCOnly, Forward);
-#endif
-
 INSTANTIATE_CLASS(ReorderLayer);
 INSTANTIATE_CLASS(ReorderLayerCHW);
 INSTANTIATE_CLASS(ReorderLayerCOnly);
