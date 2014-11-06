@@ -161,7 +161,7 @@ TYPED_TEST(ReorderLayerCOnlyTest, TestBackward) {
   const Dtype *src = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_data());
   const Dtype *dst = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_diff());
   for (int i = 0; i < this->blob_bottom_->count(); i++) {
-      CHECK_EQ(src[i], dst[i]);
+      EXPECT_EQ(src[i], dst[i]);
   }
 }
 
@@ -374,7 +374,7 @@ TYPED_TEST(ReorderLayerTest, TestForwardBackward) {
   const Dtype *src = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_data());
   const Dtype *dst = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_diff());
   for (int i = 0; i < this->blob_bottom_->count(); i++) {
-      CHECK_EQ(src[i], dst[i]);
+      EXPECT_EQ(src[i], dst[i]);
   }
 }
 

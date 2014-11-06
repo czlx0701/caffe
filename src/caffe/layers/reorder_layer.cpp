@@ -23,38 +23,45 @@ ReorderLayer<Dtype>* ReorderLayer<Dtype>::Create(
 }
 
 // {{{ ReorderLayerCOnly
+
+template <typename Dtype>
+ReorderLayerCOnly<Dtype>::~ReorderLayerCOnly(){
+    delete position_ptr;
+}
+
 template <typename Dtype>
 void ReorderLayerCOnly<Dtype>::LayerSetUp(
       const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>*) {
   const ReorderParameter& reorder_param =
       this->layer_param_.reorder_param();
-  position_.clear();
+  height = bottom[0]->height();
+  width  = bottom[0]->width();
+  size   = height * width;
+  if (!position_ptr) delete position_ptr;
+  position_ptr = new SyncedMemory(sizeof(int) * size);
+  int *positions = reinterpret_cast<int *>(position_ptr->mutable_cpu_data());
   if (reorder_param.position_size()) {
-      int size = bottom[0]->height() * bottom[0]->width();
       CHECK_EQ(reorder_param.row_size(), 0);
       CHECK_EQ(reorder_param.col_size(), 0);
       CHECK_EQ(reorder_param.position_size(), size);
-      for (int i = 0; i < reorder_param.position_size(); i++) {
+      for (int i = 0; i < size; i++) {
           int position = reorder_param.position(i);
           CHECK_LT(position, size) <<
           "Position should be less than width * height.";
           CHECK_GE(position, 0) <<
           "Position should be larger than or equal to 0.";
-          position_.push_back(position);
+          positions[i] = position;
       }
   } else {
       CHECK_EQ(reorder_param.row_size(), reorder_param.col_size());
-      CHECK_EQ(reorder_param.row_size(),
-              bottom[0]->height() * bottom[0]->width());
-      int height = bottom[0]->height();
-      int width  = bottom[0]->width();
+      CHECK_EQ(reorder_param.row_size(), size);
       for (int i = 0; i < reorder_param.row_size(); i++) {
           int row = reorder_param.row(i);
           int col = reorder_param.col(i);
           CHECK_LT(row, height);
           CHECK_LT(col, width);
-          position_.push_back(row * width + col);
+          positions[i] = row * width + col;
       }
   }
 }
@@ -66,8 +73,7 @@ void ReorderLayerCOnly<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   CHECK_NE((*top)[0], bottom[0]) << this->type_name() << " Layer does not "
         "allow in-place computation.";
   (*top)[0]->Reshape(bottom[0]->num(),
-        bottom[0]->channels() * bottom[0]->height() * bottom[0]->width(),
-        1, 1);
+        bottom[0]->channels() * height * width, 1, 1);
   CHECK_EQ(this->count_, (*top)[0]->count());
 }
 
@@ -77,15 +83,14 @@ void ReorderLayerCOnly<Dtype>::Forward_cpu(
       vector<Blob<Dtype>*>* top) {
   Blob<Dtype>* bsrc = bottom[0];
   Blob<Dtype>* bdst = (*top)[0];
-  const Dtype* src = bsrc->cpu_data();
+  const Dtype* src  = bsrc->cpu_data();
+  const int* positions = reinterpret_cast<const int*>(position_ptr->cpu_data());
   Dtype* dst  = bdst->mutable_cpu_data();
   int channel = bsrc->channels();
-  int height  = bsrc->height();
-  int width   = bsrc->width();
   for (int n = 0; n < bsrc->num(); n++) {
       int base  = n * channel * height * width;
-      for (int i = 0; i < position_.size(); i++) {
-          int position = position_[i];
+      for (int i = 0; i < size; i++) {
+          int position = positions[i];
           for (int c = 0; c < channel; c++) {
               int index_src = base + c * height * width + position;
               int index_dst = base + channel * i + c;
@@ -101,18 +106,16 @@ template <typename Dtype>
 void ReorderLayerCOnly<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
   if (!propagate_down[0]) { return; }
-  caffe_copy(this->count_, top[0]->cpu_diff(), (*bottom)[0]->mutable_cpu_diff());
   Blob<Dtype>* bsrc = (*bottom)[0];
   Blob<Dtype>* bdst = top[0];
   Dtype*       src  = bsrc->mutable_cpu_diff();
   const Dtype* dst  = bdst->cpu_diff();
+  const int* positions  = reinterpret_cast<const int*>(position_ptr->cpu_data());
   int channel = bsrc->channels();
-  int height  = bsrc->height();
-  int width   = bsrc->width();
   for (int n = 0; n < bsrc->num(); n++) {
       int base  = n * channel * height * width;
-      for (int i = 0; i < position_.size(); i++) {
-          int position = position_[i];
+      for (int i = 0; i < size; i++) {
+          int position = positions[i];
           for (int c = 0; c < channel; c++) {
               int index_src = base + c * height * width + position;
               int index_dst = base + channel * i + c;
@@ -203,6 +206,10 @@ void ReorderLayerCHW<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   }
 }
 // }}}
+
+#ifdef CPU_ONLY
+STUB_GPU(ReorderLayerCOnly);
+#endif
 
 INSTANTIATE_CLASS(ReorderLayer);
 INSTANTIATE_CLASS(ReorderLayerCHW);
