@@ -22,13 +22,7 @@ ReorderLayer<Dtype>* ReorderLayer<Dtype>::Create(
     return NULL;
 }
 
-template <typename Dtype>
-void ReorderLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
-  if (!propagate_down[0]) { return; }
-  caffe_copy(count_, top[0]->cpu_diff(), (*bottom)[0]->mutable_cpu_diff());
-}
-
+// {{{ ReorderLayerCOnly
 template <typename Dtype>
 void ReorderLayerCOnly<Dtype>::LayerSetUp(
       const vector<Blob<Dtype>*>& bottom,
@@ -88,26 +82,51 @@ void ReorderLayerCOnly<Dtype>::Forward_cpu(
   int channel = bsrc->channels();
   int height  = bsrc->height();
   int width   = bsrc->width();
-  int index   = 0;
-  int base    = 0;
   for (int n = 0; n < bsrc->num(); n++) {
-      base  = n * channel * height * width;
-      index = 0;
-      for (vector<int>::const_iterator iter = position_.begin();
-              iter != position_.end(); ++iter) {
-          int position = *iter;
+      int base  = n * channel * height * width;
+      for (int i = 0; i < position_.size(); i++) {
+          int position = position_[i];
           for (int c = 0; c < channel; c++) {
               int index_src = base + c * height * width + position;
-              dst[index + base] = src[index_src];
+              int index_dst = base + channel * i + c;
+              dst[index_dst] = src[index_src];
               CHECK_LT(index_src, this->count_);
-              CHECK_LT(index + base, this->count_);
-              index++;
+              CHECK_LT(index_src, this->count_);
           }
       }
   }
-  CHECK_EQ(index + base, this->count_);
 }
 
+template <typename Dtype>
+void ReorderLayerCOnly<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
+  if (!propagate_down[0]) { return; }
+  caffe_copy(this->count_, top[0]->cpu_diff(), (*bottom)[0]->mutable_cpu_diff());
+  Blob<Dtype>* bsrc = (*bottom)[0];
+  Blob<Dtype>* bdst = top[0];
+  Dtype*       src  = bsrc->mutable_cpu_diff();
+  const Dtype* dst  = bdst->cpu_diff();
+  int channel = bsrc->channels();
+  int height  = bsrc->height();
+  int width   = bsrc->width();
+  for (int n = 0; n < bsrc->num(); n++) {
+      int base  = n * channel * height * width;
+      for (int i = 0; i < position_.size(); i++) {
+          int position = position_[i];
+          for (int c = 0; c < channel; c++) {
+              int index_src = base + c * height * width + position;
+              int index_dst = base + channel * i + c;
+              src[index_src] = dst[index_dst];
+              CHECK_LT(index_src, this->count_);
+              CHECK_LT(index_src, this->count_);
+          }
+      }
+  }
+}
+
+// }}}
+
+// {{{ ReorderLayerCHW
 template <typename Dtype>
 void ReorderLayerCHW<Dtype>::LayerSetUp(
       const vector<Blob<Dtype>*>& bottom,
@@ -159,6 +178,31 @@ void ReorderLayerCHW<Dtype>::Forward_cpu(
       }
   }
 }
+
+template <typename Dtype>
+void ReorderLayerCHW<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom) {
+  if (!propagate_down[0]) { return; }
+  Blob<Dtype>* bsrc = (*bottom)[0];
+  const Blob<Dtype>* bdst = top[0];
+  Dtype* src = bsrc->mutable_cpu_diff();
+  const Dtype* dst = bdst->cpu_diff();
+  for (int n = 0; n < num_; n++) {
+      int base = n * channels_ * height_ * width_;
+      for (int c = 0; c < channels_; c++) {
+          for (int h = 0; h < height_; h++) {
+              for (int w = 0; w < width_; w++) {
+                  int index_src = base + (h * width_ + w) * channels_ + c;
+                  int index_dst = base + (c * height_ + h) * width_ + w;
+                  CHECK_LT(index_src, this->count_);
+                  CHECK_LT(index_dst, this->count_);
+                  src[index_src] = dst[index_dst];
+              }
+          }
+      }
+  }
+}
+// }}}
 
 INSTANTIATE_CLASS(ReorderLayer);
 INSTANTIATE_CLASS(ReorderLayerCHW);

@@ -500,8 +500,6 @@ class ReorderLayer: public Layer<Dtype> {
   }
   virtual inline int ExactNumBottomBlobs() const { return 1; }
   virtual inline int ExactNumTopBlobs() const { return 1; }
-  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
  protected:
   int count_;
 };
@@ -521,6 +519,8 @@ class ReorderLayerCHW: public ReorderLayer<Dtype> {
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
 
   int num_;
   int channels_;
@@ -538,6 +538,8 @@ class ReorderLayerCOnly: public ReorderLayer<Dtype> {
       vector<Blob<Dtype>*>* top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, vector<Blob<Dtype>*>* bottom);
 
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,

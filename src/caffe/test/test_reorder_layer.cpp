@@ -147,6 +147,24 @@ TYPED_TEST(ReorderLayerCOnlyTest, TestSetupNumPos_Less) {
           layer->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_)), "");
 }
 
+TYPED_TEST(ReorderLayerCOnlyTest, TestBackward) {
+  typedef typename TypeParam::Dtype Dtype;
+  shared_ptr< ReorderLayer<Dtype> > layer_conly(create_reorder_layer_c<Dtype>());
+  vector<bool> propagate_down;
+  propagate_down.push_back(true);
+  layer_conly->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
+  layer_conly->Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
+  caffe_copy(this->blob_top_->count(),
+        reinterpret_cast<const Dtype *>(this->blob_top_->cpu_data()),
+        reinterpret_cast<Dtype *>(this->blob_top_->mutable_cpu_diff()));
+  layer_conly->Backward(this->blob_top_vec_, propagate_down, &(this->blob_bottom_vec_));
+  const Dtype *src = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_data());
+  const Dtype *dst = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_diff());
+  for (int i = 0; i < this->blob_bottom_->count(); i++) {
+      CHECK_EQ(src[i], dst[i]);
+  }
+}
+
 TYPED_TEST(ReorderLayerCOnlyTest, TestSetupNumPos_More) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param = create_reorder_layer_c_param();
@@ -230,6 +248,24 @@ TYPED_TEST(ReorderLayerCHWTest, TestSetupMissing) {
   EXPECT_DEATH(
           layer->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_)), "");
 }
+
+TYPED_TEST(ReorderLayerCHWTest, TestBackward) {
+  typedef typename TypeParam::Dtype Dtype;
+  shared_ptr< ReorderLayer<Dtype> > layer_chw(create_reorder_layer_chw<Dtype>());
+  vector<bool> propagate_down;
+  propagate_down.push_back(true);
+  layer_chw->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
+  layer_chw->Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
+  caffe_copy(this->blob_top_->count(),
+        reinterpret_cast<const Dtype *>(this->blob_top_->cpu_data()),
+        reinterpret_cast<Dtype *>(this->blob_top_->mutable_cpu_diff()));
+  layer_chw->Backward(this->blob_top_vec_, propagate_down, &(this->blob_bottom_vec_));
+  const Dtype *src = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_data());
+  const Dtype *dst = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_diff());
+  for (int i = 0; i < this->blob_bottom_->count(); i++) {
+      CHECK_EQ(src[i], dst[i]);
+  }
+}
 // }}}
 
 // {{{ReorderLayerTest
@@ -312,6 +348,34 @@ TYPED_TEST(ReorderLayerTest, TestForward) {
 
   this->blob_result_->Reshape(6, 12, 2, 3);
   check_reorder_result(*this->blob_bottom_, *this->blob_result_);
+}
+
+TYPED_TEST(ReorderLayerTest, TestForwardBackward) {
+  typedef typename TypeParam::Dtype Dtype;
+  shared_ptr< ReorderLayer<Dtype> > layer_conly(create_reorder_layer_c<Dtype>());
+  shared_ptr< ReorderLayer<Dtype> > layer_chw(create_reorder_layer_chw<Dtype>());
+  vector<bool> propagate_down;
+  propagate_down.push_back(true);
+
+  layer_conly->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
+  layer_conly->Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
+
+  layer_chw->SetUp(this->blob_top_vec_, &(this->blob_result_vec_));
+  layer_chw->Forward(this->blob_top_vec_, &(this->blob_result_vec_));
+
+  this->blob_result_->Reshape(6, 12, 2, 3);
+  check_reorder_result(*this->blob_bottom_, *this->blob_result_);
+
+  caffe_copy(this->blob_result_->count(),
+        reinterpret_cast<const Dtype *>(this->blob_result_->cpu_data()),
+        reinterpret_cast<Dtype *>(this->blob_result_->mutable_cpu_diff()));
+  layer_chw->Backward(this->blob_result_vec_, propagate_down, &(this->blob_top_vec_));
+  layer_conly->Backward(this->blob_top_vec_, propagate_down, &(this->blob_bottom_vec_));
+  const Dtype *src = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_data());
+  const Dtype *dst = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_diff());
+  for (int i = 0; i < this->blob_bottom_->count(); i++) {
+      CHECK_EQ(src[i], dst[i]);
+  }
 }
 
 // }}}
