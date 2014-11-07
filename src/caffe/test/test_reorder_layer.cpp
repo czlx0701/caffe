@@ -20,7 +20,7 @@ class ReorderLayerCOnlyTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   ReorderLayerCOnlyTest()
-      : blob_bottom_(new Blob<Dtype>(6, 12, 2, 3)),
+      : blob_bottom_(new Blob<Dtype>(128, 256, 2, 3)),
         blob_top_(new Blob<Dtype>()) {}
   virtual void SetUp() {
     // fill the values
@@ -191,7 +191,7 @@ class ReorderLayerCHWTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   ReorderLayerCHWTest()
-      : blob_bottom_(new Blob<Dtype>(6, 12 * 2 * 3, 1, 1)),
+      : blob_bottom_(new Blob<Dtype>(128, 256 * 2 * 3, 1, 1)),
         blob_top_(new Blob<Dtype>()) {}
   virtual void SetUp() {
     // fill the values
@@ -219,7 +219,7 @@ static LayerParameter create_reorder_layer_chw_param() {
   LayerParameter layer_param;
   ReorderParameter *param = layer_param.mutable_reorder_param();
   param->set_order(ReorderParameter_StorageOrder_ChannelHeightWeight);
-  param->set_channels(12);
+  param->set_channels(256);
   param->set_height(2);
   param->set_width(3);
   return layer_param;
@@ -275,7 +275,7 @@ class ReorderLayerTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   ReorderLayerTest()
-      : blob_bottom_(new Blob<Dtype>(6, 12, 2, 3)),
+      : blob_bottom_(new Blob<Dtype>(128, 256, 2, 3)),
         blob_top_(new Blob<Dtype>()),
         blob_result_(new Blob<Dtype>()) {}
 
@@ -346,7 +346,7 @@ TYPED_TEST(ReorderLayerTest, TestForward) {
   layer_chw->SetUp(this->blob_top_vec_, &(this->blob_result_vec_));
   layer_chw->Forward(this->blob_top_vec_, &(this->blob_result_vec_));
 
-  this->blob_result_->Reshape(6, 12, 2, 3);
+  this->blob_result_->Reshape(128, 256, 2, 3);
   check_reorder_result(*this->blob_bottom_, *this->blob_result_);
 }
 
@@ -363,7 +363,7 @@ TYPED_TEST(ReorderLayerTest, TestForwardBackward) {
   layer_chw->SetUp(this->blob_top_vec_, &(this->blob_result_vec_));
   layer_chw->Forward(this->blob_top_vec_, &(this->blob_result_vec_));
 
-  this->blob_result_->Reshape(6, 12, 2, 3);
+  this->blob_result_->Reshape(128, 256, 2, 3);
   check_reorder_result(*this->blob_bottom_, *this->blob_result_);
 
   caffe_copy(this->blob_result_->count(),
