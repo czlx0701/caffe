@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <vector>
 
-#include "caffe/layer.hpp"
 #include "caffe/common_layers.hpp"
 
 namespace caffe {
@@ -31,10 +30,12 @@ void ReorderLayerCOnly<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   const int num      = bottom[0]->num();
   const int channels = bottom[0]->channels();
   const int *pos = reinterpret_cast<const int *>(position_ptr->cpu_data());
-  const int *positions = reinterpret_cast<const int *>(position_ptr->gpu_data());
+  const int *positions =
+      reinterpret_cast<const int *>(position_ptr->gpu_data());
   // NOLINT_NEXT_LINE(whitespace/operators)
   CHECK_EQ(num * channels * height * width, (*top)[0]->count());
   CHECK_EQ(num * channels * height * width, bottom[0]->count());
+  // NOLINT_NEXT_LINE(*)
   ReorderCOnlyForward<Dtype><<<CAFFE_GET_BLOCKS(channels), CAFFE_CUDA_NUM_THREADS>>>(
       num, channels, height, width, positions, bottom_data, top_data);
   CUDA_POST_KERNEL_CHECK;
@@ -65,10 +66,12 @@ void ReorderLayerCOnly<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   const Dtype* top_data = top[0]->gpu_diff();
   const int num      = (*bottom)[0]->num();
   const int channels = (*bottom)[0]->channels();
-  const int *positions = reinterpret_cast<const int *>(position_ptr->gpu_data());
+  const int *positions =
+      reinterpret_cast<const int *>(position_ptr->gpu_data());
   // NOLINT_NEXT_LINE(whitespace/operators)
   CHECK_EQ(num * channels * height * width, top[0]->count());
   CHECK_EQ(num * channels * height * width, (*bottom)[0]->count());
+  // NOLINT_NEXT_LINE(*)
   ReorderCOnlyBackward<Dtype><<<CAFFE_GET_BLOCKS(channels), CAFFE_CUDA_NUM_THREADS>>>(
       num, channels, height, width, positions, bottom_data, top_data);
   CUDA_POST_KERNEL_CHECK;
@@ -99,6 +102,7 @@ void ReorderLayerCHW<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   // NOLINT_NEXT_LINE(whitespace/operators)
   CHECK_EQ(num_ * channels_ * height_ * width_, (*top)[0]->count());
   CHECK_EQ(num_ * channels_ * height_ * width_, bottom[0]->count());
+  // NOLINT_NEXT_LINE(*)
   ReorderCHWForward<Dtype><<<CAFFE_GET_BLOCKS(channels_), CAFFE_CUDA_NUM_THREADS>>>(
       num_, channels_, height_, width_, bottom_data, top_data);
   CUDA_POST_KERNEL_CHECK;
@@ -130,6 +134,7 @@ void ReorderLayerCHW<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   // NOLINT_NEXT_LINE(whitespace/operators)
   CHECK_EQ(num_ * channels_ * height_ * width_, top[0]->count());
   CHECK_EQ(num_ * channels_ * height_ * width_, (*bottom)[0]->count());
+  // NOLINT_NEXT_LINE(*)
   ReorderCHWBackward<Dtype><<<CAFFE_GET_BLOCKS(channels_), CAFFE_CUDA_NUM_THREADS>>>(
       num_, channels_, height_, width_, bottom_data, top_data);
   CUDA_POST_KERNEL_CHECK;

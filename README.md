@@ -1,5 +1,5 @@
 # Caffe
-[![Build Status](https://travis-ci.org/czlx0701/caffe.png)](https://travis-ci.org/czlx0701/caffe)
+[![Build Status](https://travis-ci.org/czlx0701/caffe.svg?branch=reorder)](https://travis-ci.org/czlx0701/caffe)
 
 Caffe is a deep learning framework developed with cleanliness, readability, and speed in mind.<br />
 Consult the [project website](http://caffe.berkeleyvision.org) for all documentation.

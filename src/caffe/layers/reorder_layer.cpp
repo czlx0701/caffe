@@ -25,7 +25,7 @@ ReorderLayer<Dtype>* ReorderLayer<Dtype>::Create(
 // {{{ ReorderLayerCOnly
 
 template <typename Dtype>
-ReorderLayerCOnly<Dtype>::~ReorderLayerCOnly(){
+ReorderLayerCOnly<Dtype>::~ReorderLayerCOnly() {
     delete position_ptr;
 }
 
@@ -110,7 +110,7 @@ void ReorderLayerCOnly<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   Blob<Dtype>* bdst = top[0];
   Dtype*       src  = bsrc->mutable_cpu_diff();
   const Dtype* dst  = bdst->cpu_diff();
-  const int* positions  = reinterpret_cast<const int*>(position_ptr->cpu_data());
+  const int* positions = reinterpret_cast<const int*>(position_ptr->cpu_data());
   int channel = bsrc->channels();
   for (int n = 0; n < bsrc->num(); n++) {
       int base  = n * channel * height * width;

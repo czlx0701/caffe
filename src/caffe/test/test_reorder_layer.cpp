@@ -4,9 +4,8 @@
 #include "gtest/gtest.h"
 
 #include "caffe/blob.hpp"
-#include "caffe/common.hpp"
-#include "caffe/filler.hpp"
 #include "caffe/common_layers.hpp"
+#include "caffe/filler.hpp"
 
 #include "caffe/test/test_caffe_main.hpp"
 #include "caffe/test/test_gradient_check_util.hpp"
@@ -44,8 +43,7 @@ class ReorderLayerCOnlyTest : public MultiDeviceTest<TypeParam> {
 
 TYPED_TEST_CASE(ReorderLayerCOnlyTest, TestDtypesAndDevices);
 
-static void add_param_pos(ReorderParameter *param)
-{
+static void add_param_pos(ReorderParameter *param) {
 #define ADD_POS(row, col) param->add_row(row); param->add_col(col);
   ADD_POS(1, 2);
   ADD_POS(0, 1);
@@ -73,7 +71,7 @@ static ReorderLayer<Dtype>* create_reorder_layer_c() {
 
 TYPED_TEST(ReorderLayerCOnlyTest, TestSetupNumRowCol) {
   typedef typename TypeParam::Dtype Dtype;
-  shared_ptr< ReorderLayer<Dtype> > layer(create_reorder_layer_c<Dtype>()); 
+  shared_ptr< ReorderLayer<Dtype> > layer(create_reorder_layer_c<Dtype>());
   layer->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   EXPECT_EQ(this->blob_bottom_->num(), this->blob_top_->num());
   EXPECT_EQ(this->blob_top_->channels(),
@@ -87,7 +85,8 @@ TYPED_TEST(ReorderLayerCOnlyTest, TestSetupNumRowCol_Less) {
   ReorderParameter *param = layer_param.mutable_reorder_param();
   add_param_pos(param);
   param->add_row(1); param->add_col(0);
-  shared_ptr< ReorderLayer<Dtype> > layer(ReorderLayer<Dtype>::Create(layer_param)); 
+  shared_ptr< ReorderLayer<Dtype> > layer(
+          ReorderLayer<Dtype>::Create(layer_param));
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   EXPECT_DEATH(
           layer->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_)), "");
@@ -100,7 +99,8 @@ TYPED_TEST(ReorderLayerCOnlyTest, TestSetupNumRowCol_More) {
   add_param_pos(param);
   param->add_row(1);
   param->add_row(0);
-  shared_ptr< ReorderLayer<Dtype> > layer(ReorderLayer<Dtype>::Create(layer_param)); 
+  shared_ptr< ReorderLayer<Dtype> > layer(
+          ReorderLayer<Dtype>::Create(layer_param));
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   EXPECT_DEATH(
           layer->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_)), "");
@@ -112,7 +112,8 @@ TYPED_TEST(ReorderLayerCOnlyTest, TestSetupNumRowCol_NE) {
   ReorderParameter *param = layer_param.mutable_reorder_param();
   add_param_pos(param);
   param->add_row(1);
-  shared_ptr< ReorderLayer<Dtype> > layer(ReorderLayer<Dtype>::Create(layer_param)); 
+  shared_ptr< ReorderLayer<Dtype> > layer(
+          ReorderLayer<Dtype>::Create(layer_param));
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   EXPECT_DEATH(
           layer->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_)), "");
@@ -128,7 +129,8 @@ TYPED_TEST(ReorderLayerCOnlyTest, TestSetupNumPos) {
   param->add_position(4);
   param->add_position(5);
   param->add_position(0);
-  shared_ptr< ReorderLayer<Dtype> > layer(ReorderLayer<Dtype>::Create(layer_param)); 
+  shared_ptr< ReorderLayer<Dtype> > layer(
+          ReorderLayer<Dtype>::Create(layer_param));
   layer->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   EXPECT_EQ(this->blob_bottom_->num(), this->blob_top_->num());
   EXPECT_EQ(this->blob_top_->channels(),
@@ -141,7 +143,8 @@ TYPED_TEST(ReorderLayerCOnlyTest, TestSetupNumPos_Less) {
   LayerParameter layer_param = create_reorder_layer_c_param();
   ReorderParameter *param = layer_param.mutable_reorder_param();
   param->add_position(1);
-  shared_ptr< ReorderLayer<Dtype> > layer(ReorderLayer<Dtype>::Create(layer_param)); 
+  shared_ptr< ReorderLayer<Dtype> > layer(
+          ReorderLayer<Dtype>::Create(layer_param));
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   EXPECT_DEATH(
           layer->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_)), "");
@@ -149,7 +152,8 @@ TYPED_TEST(ReorderLayerCOnlyTest, TestSetupNumPos_Less) {
 
 TYPED_TEST(ReorderLayerCOnlyTest, TestBackward) {
   typedef typename TypeParam::Dtype Dtype;
-  shared_ptr< ReorderLayer<Dtype> > layer_conly(create_reorder_layer_c<Dtype>());
+  shared_ptr< ReorderLayer<Dtype> > layer_conly(
+          create_reorder_layer_c<Dtype>());
   vector<bool> propagate_down;
   propagate_down.push_back(true);
   layer_conly->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
@@ -157,9 +161,12 @@ TYPED_TEST(ReorderLayerCOnlyTest, TestBackward) {
   caffe_copy(this->blob_top_->count(),
         reinterpret_cast<const Dtype *>(this->blob_top_->cpu_data()),
         reinterpret_cast<Dtype *>(this->blob_top_->mutable_cpu_diff()));
-  layer_conly->Backward(this->blob_top_vec_, propagate_down, &(this->blob_bottom_vec_));
-  const Dtype *src = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_data());
-  const Dtype *dst = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_diff());
+  layer_conly->Backward(this->blob_top_vec_, propagate_down,
+          &(this->blob_bottom_vec_));
+  const Dtype *src = reinterpret_cast<const Dtype *>(
+          this->blob_bottom_->cpu_data());
+  const Dtype *dst = reinterpret_cast<const Dtype *>(
+          this->blob_bottom_->cpu_diff());
   for (int i = 0; i < this->blob_bottom_->count(); i++) {
       EXPECT_EQ(src[i], dst[i]);
   }
@@ -176,7 +183,8 @@ TYPED_TEST(ReorderLayerCOnlyTest, TestSetupNumPos_More) {
   param->add_position(5);
   param->add_position(0);
   param->add_position(0);
-  shared_ptr< ReorderLayer<Dtype> > layer(ReorderLayer<Dtype>::Create(layer_param)); 
+  shared_ptr< ReorderLayer<Dtype> > layer(
+          ReorderLayer<Dtype>::Create(layer_param));
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   EXPECT_DEATH(
           layer->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_)), "");
@@ -233,7 +241,7 @@ static ReorderLayer<Dtype>* create_reorder_layer_chw() {
 
 TYPED_TEST(ReorderLayerCHWTest, TestSetup) {
   typedef typename TypeParam::Dtype Dtype;
-  shared_ptr< ReorderLayer<Dtype> > layer(create_reorder_layer_chw<Dtype>()); 
+  shared_ptr< ReorderLayer<Dtype> > layer(create_reorder_layer_chw<Dtype>());
   layer->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   EXPECT_EQ(this->blob_bottom_->num(), this->blob_top_->num());
   EXPECT_EQ(this->blob_top_->count(), this->blob_bottom_->count());
@@ -243,7 +251,7 @@ TYPED_TEST(ReorderLayerCHWTest, TestSetupMissing) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter param = create_reorder_layer_chw_param();
   param.mutable_reorder_param()->clear_channels();
-  shared_ptr< ReorderLayer<Dtype> > layer(ReorderLayer<Dtype>::Create(param)); 
+  shared_ptr< ReorderLayer<Dtype> > layer(ReorderLayer<Dtype>::Create(param));
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   EXPECT_DEATH(
           layer->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_)), "");
@@ -251,7 +259,8 @@ TYPED_TEST(ReorderLayerCHWTest, TestSetupMissing) {
 
 TYPED_TEST(ReorderLayerCHWTest, TestBackward) {
   typedef typename TypeParam::Dtype Dtype;
-  shared_ptr< ReorderLayer<Dtype> > layer_chw(create_reorder_layer_chw<Dtype>());
+  shared_ptr< ReorderLayer<Dtype> > layer_chw(
+          create_reorder_layer_chw<Dtype>());
   vector<bool> propagate_down;
   propagate_down.push_back(true);
   layer_chw->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
@@ -259,9 +268,12 @@ TYPED_TEST(ReorderLayerCHWTest, TestBackward) {
   caffe_copy(this->blob_top_->count(),
         reinterpret_cast<const Dtype *>(this->blob_top_->cpu_data()),
         reinterpret_cast<Dtype *>(this->blob_top_->mutable_cpu_diff()));
-  layer_chw->Backward(this->blob_top_vec_, propagate_down, &(this->blob_bottom_vec_));
-  const Dtype *src = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_data());
-  const Dtype *dst = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_diff());
+  layer_chw->Backward(this->blob_top_vec_, propagate_down,
+          &(this->blob_bottom_vec_));
+  const Dtype *src = reinterpret_cast<const Dtype *>(
+          this->blob_bottom_->cpu_data());
+  const Dtype *dst = reinterpret_cast<const Dtype *>(
+          this->blob_bottom_->cpu_diff());
   for (int i = 0; i < this->blob_bottom_->count(); i++) {
       CHECK_EQ(src[i], dst[i]);
   }
@@ -306,7 +318,8 @@ class ReorderLayerTest : public MultiDeviceTest<TypeParam> {
 TYPED_TEST_CASE(ReorderLayerTest, TestDtypesAndDevices);
 
 template <typename Dtype>
-static void check_reorder_result(const Blob<Dtype> &src, const Blob<Dtype> &dst) {
+static void check_reorder_result(const Blob<Dtype> &src,
+        const Blob<Dtype> &dst) {
 #define DEC_GET_VAR(name)   int name = src.name();
     DEC_GET_VAR(num);
     DEC_GET_VAR(channels);
@@ -338,8 +351,10 @@ static void check_reorder_result(const Blob<Dtype> &src, const Blob<Dtype> &dst)
 
 TYPED_TEST(ReorderLayerTest, TestForward) {
   typedef typename TypeParam::Dtype Dtype;
-  shared_ptr< ReorderLayer<Dtype> > layer_conly(create_reorder_layer_c<Dtype>());
-  shared_ptr< ReorderLayer<Dtype> > layer_chw(create_reorder_layer_chw<Dtype>());
+  shared_ptr< ReorderLayer<Dtype> > layer_conly(
+          create_reorder_layer_c<Dtype>());
+  shared_ptr< ReorderLayer<Dtype> > layer_chw(
+          create_reorder_layer_chw<Dtype>());
   layer_conly->SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer_conly->Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
 
@@ -352,8 +367,10 @@ TYPED_TEST(ReorderLayerTest, TestForward) {
 
 TYPED_TEST(ReorderLayerTest, TestForwardBackward) {
   typedef typename TypeParam::Dtype Dtype;
-  shared_ptr< ReorderLayer<Dtype> > layer_conly(create_reorder_layer_c<Dtype>());
-  shared_ptr< ReorderLayer<Dtype> > layer_chw(create_reorder_layer_chw<Dtype>());
+  shared_ptr< ReorderLayer<Dtype> > layer_conly(
+          create_reorder_layer_c<Dtype>());
+  shared_ptr< ReorderLayer<Dtype> > layer_chw(
+          create_reorder_layer_chw<Dtype>());
   vector<bool> propagate_down;
   propagate_down.push_back(true);
 
@@ -369,10 +386,14 @@ TYPED_TEST(ReorderLayerTest, TestForwardBackward) {
   caffe_copy(this->blob_result_->count(),
         reinterpret_cast<const Dtype *>(this->blob_result_->cpu_data()),
         reinterpret_cast<Dtype *>(this->blob_result_->mutable_cpu_diff()));
-  layer_chw->Backward(this->blob_result_vec_, propagate_down, &(this->blob_top_vec_));
-  layer_conly->Backward(this->blob_top_vec_, propagate_down, &(this->blob_bottom_vec_));
-  const Dtype *src = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_data());
-  const Dtype *dst = reinterpret_cast<const Dtype *>(this->blob_bottom_->cpu_diff());
+  layer_chw->Backward(this->blob_result_vec_, propagate_down,
+          &(this->blob_top_vec_));
+  layer_conly->Backward(this->blob_top_vec_, propagate_down,
+          &(this->blob_bottom_vec_));
+  const Dtype *src = reinterpret_cast<const Dtype *>(
+          this->blob_bottom_->cpu_data());
+  const Dtype *dst = reinterpret_cast<const Dtype *>(
+          this->blob_bottom_->cpu_diff());
   for (int i = 0; i < this->blob_bottom_->count(); i++) {
       EXPECT_EQ(src[i], dst[i]);
   }
